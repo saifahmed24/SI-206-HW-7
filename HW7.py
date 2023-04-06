@@ -8,6 +8,7 @@ import unittest
 import sqlite3
 import json
 import os
+import re
 
 def read_data(filename):
     full_path = os.path.join(os.path.dirname(__file__), filename)
@@ -53,7 +54,35 @@ def make_positions_table(data, cur, conn):
 #     created for you -- see make_positions_table above for details.
 
 def make_players_table(data, cur, conn):
-    pass
+    #pass
+
+    # cur.execute("""CREATE TABLE NOT EXISTS Players (id INTEGER KEY, name TEXT, position_id INTEGER, birthyear INTEGER, naationality TEXT)""")
+    # nationality was spelled wrong (be careful with spelling)
+    # also use IF NOT EXISTS (review readings)
+
+    # If a file doesn't already exist, then create one 
+    cur.execute("""CREATE TABLE IF NOT EXISTS Players (id INTEGER PRIMARY KEY, name TEXT, position_id INTEGER, birthyear INTEGER, nationality TEXT)""")	
+
+    # We want to iterate over every player in the squad
+    # Take data and get the value of the squad column 
+    # Then add the data by looking at the other columns 	
+    for person in data['squad']:	
+
+        # get a players id, namem and naitonality (Does it have to be in order ?) **
+        id = person['id']	
+        name = person['name']	
+        nationality = person['nationality']	
+
+        # First get the position a person plays then get the id 
+        position = person['position']	
+        position_id = cur.execute("""SELECT id FROM Positions WHERE position = (?) """,(position,)).fetchone()[0]	
+
+        # get the full date then use region to isolate the 4-digit year of birth
+        date = person['dateOfBirth']	
+        birthyear = re.findall("^\d{4}",date)[0]	
+        	
+        cur.execute("""INSERT OR IGNORE INTO Players (id, name, position_id, birthyear, nationality) VALUES (?,?,?,?,?)""", (id, name, position_id, birthyear, nationality))	
+        conn.commit()
 
 ## [TASK 2]: 10 points
 # Finish the function nationality_search
