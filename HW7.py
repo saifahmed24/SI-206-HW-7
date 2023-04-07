@@ -129,7 +129,7 @@ def nationality_search(countries, cur, conn):
 
 def birthyear_nationality_search(age, country, cur, conn):
     #pass
-    
+
     # set the current year 
     current_year = 2023 
 
@@ -161,7 +161,21 @@ def birthyear_nationality_search(age, country, cur, conn):
     # HINT: You'll have to use JOIN for this task.
 
 def position_birth_search(position, age, cur, conn):
-       pass
+    #pass
+
+    # set the current year 
+    current_year = 2023 
+
+    # set the birth year of the players that we want
+    search_year = current_year - age	
+
+    # Use join to find where the position id is equal to the player's position id
+    # Then select all the players that match this search (using fetchall)	
+    players = cur.execute("""SELECT Players.name, Positions.position, Players.birthyear	
+    FROM Players JOIN Positions	ON Positions.id = Players.position_id WHERE Positions.position 
+    = (?) and Players.birthyear > (?)""",(position, search_year)).fetchall()	
+
+    return players
 
 
 # [EXTRA CREDIT]
