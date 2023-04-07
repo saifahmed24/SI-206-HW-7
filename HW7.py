@@ -128,7 +128,20 @@ def nationality_search(countries, cur, conn):
 
 
 def birthyear_nationality_search(age, country, cur, conn):
-    pass
+    #pass
+    
+    # set the current year 
+    current_year = 2023 
+
+    # set the birth year of the players that we want
+    search_year = current_year - age
+
+    # get a list of all the players that matcht the country parameter and are born before search_year
+    # search_year is the birthyear playes must be born before to be added to the list 
+    players = cur.execute("""SELECT name, nationality, birthyear FROM Players WHERE 	
+    nationality = (?) and birthyear < (?)""", (country, search_year)).fetchall()	
+    	
+    return players
 
 ## [TASK 4]: 15 points
 # finish the function position_birth_search
