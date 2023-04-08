@@ -214,10 +214,60 @@ def position_birth_search(position, age, cur, conn):
 #     the passed year. 
 
 def make_winners_table(data, cur, conn):
-    pass
+    #pass
+
+    win_list = []	
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS Winners	
+    (id INTEGER PRIMARY KEY, name TEXT)""")	
+
+    for season in data['seasons']:	
+
+        if season.get('winner') != None:
+            
+            #get the name and id of the team
+            id =  season['winner']['id']	
+            name = season['winner']['name']	
+
+            # if the team is not already in the list of winners 
+            if (id, name) not in win_list:	
+                win_list.append((id,name))	
+
+    # iterate over the list of teams that won 
+    for winner in win_list:	
+
+        #cur.execute("""INSERT INTO Winners (id, name) VALUES (?,?)""", (winner))	
+
+        cur.execute("""INSERT OR IGNORE INTO Winners (id, name) VALUES (?,?)""", (winner))	
+    	
+    conn.commit()
 
 def make_seasons_table(data, cur, conn):
-    pass
+    #pass
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS Seasons (id INTEGER PRIMARY KEY, winner_id INTEGER, end_year INTEGER)""")	
+     	
+    for season in data['seasons']:	
+
+        if data["currentSeason"]['id'] == season['id']:
+            #break 
+            continue	
+        elif season.get('winner') == None:
+            continue
+        
+        # get the id 
+        team_id = season['id']	
+        team_name = season['winner']['name']	
+
+        # error was because team_name didn't have comma after it (syntax thing maybe)
+        winner_id = cur.execute("""SELECT id FROM Winners WHERE name = (?)""", (team_name,)).fetchone()[0]	
+
+        # use the same strategy as in make players table to get the 4 digit year
+        end_year = re.findall("^\d{4}",season['endDate'])[0]
+
+        cur.execute("""INSERT OR IGNORE INTO Seasons (id, winner_id, end_year) VALUES (?,?,?)""", (team_id, winner_id, end_year))	
+        	
+        conn.commit()
 
 def winners_since_search(year, cur, conn):
     pass
@@ -278,14 +328,20 @@ class TestAllMethods(unittest.TestCase):
     def test_make_winners_table(self):
         self.cur2.execute('SELECT * from Winners')
         winners_list = self.cur2.fetchall()
-
-        pass
+        self.assertEqual(len(winners_list), 7)	
+        self.assertIs(type(winners_list[0][0]),int)	
+        self.assertIs(type(winners_list[0][1]),str)
+        self.assertEqual(winners_list[0][0], 57)
+        self.assertEqual(winners_list[0][1], "Arsenal FC")
+        
 
     def test_make_seasons_table(self):
         self.cur2.execute('SELECT * from Seasons')
         seasons_list = self.cur2.fetchall()
-
-        pass
+        self.assertEqual(len(seasons_list), 28)	
+        self.assertIs(type(seasons_list[0][0]),int)
+        self.assertIs(type(seasons_list[0][1]),int)
+        self.assertEqual(len(str(seasons_list[0][2])), 4)	
 
     def test_winners_since_search(self):
 
